@@ -1,0 +1,8 @@
+django
+djangorestframework
+psycopg2-binary
+django-celery-beat
+django-celery-results
+sklearn
+numpy
+scipy

@@ -6,3 +6,4 @@ django-celery-results
 sklearn
 numpy
 scipy
+django-cors-headers

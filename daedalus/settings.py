@@ -42,7 +42,8 @@ INSTALLED_APPS = [
     'modeling.apps.ModelingConfig',
     'django_celery_results',
     'django_celery_beat',
-    'modeling.analysis'
+    'modeling.analysis',
+    'corsheaders'
 ]
 
 MIDDLEWARE = [
@@ -53,6 +54,8 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
+    'django.middleware.common.CommonMiddleware',
 ]
 
 ROOT_URLCONF = 'daedalus.urls'
@@ -139,6 +142,10 @@ USE_L10N = True
 
 USE_TZ = True
 
+# CORS Config
+CORS_ORIGIN_WHITELIST = (
+    'localhost:4200'
+)
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/2.1/howto/static-files/

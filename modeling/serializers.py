@@ -5,7 +5,7 @@ from modeling.models import InputVariable, OutputVariable, System, DataSet, Surr
 class InputVariableSerializer(serializers.ModelSerializer):
     class Meta:
         model = InputVariable
-        fields = ('id', 'name', 'description', 'lower_bound', 'upper_bound')
+        fields = ('id', 'name', 'description')
 
 
 class OutputVariableSerializer(serializers.ModelSerializer):
@@ -14,7 +14,19 @@ class OutputVariableSerializer(serializers.ModelSerializer):
         fields = ('id', 'name', 'description')
 
 
-class DataSetSerializer(serializers.ModelSerializer):
+class DataSetListSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = DataSet
+        fields = ('id', 'description', 'created', 'runs', 'system_id')
+
+    def create(self, validated_data):
+        validated_data['system_id'] = self.context['system_id']
+        dataset = DataSet.objects.create(**validated_data)
+        return dataset
+
+
+class DataSetDetailsSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = DataSet
@@ -36,7 +48,7 @@ class SurrogateSerializer(serializers.ModelSerializer):
 class SystemSerializer(serializers.ModelSerializer):
     input_variables = InputVariableSerializer(many=True, required=False)
     output_variables = OutputVariableSerializer(many=True, required=False)
-    datasets = serializers.HyperlinkedRelatedField(many=True, view_name='dataset-detail', read_only=True)
+    datasets = DataSetListSerializer(many=True, required=False)
     surrogate = SurrogateSerializer(many=False, required=False)
 
     class Meta:

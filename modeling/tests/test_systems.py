@@ -9,13 +9,9 @@ valid_system_data = {'name': 'system with vars',
                      'description': 'system with vars description',
                      'input_variables': [
                          {'name': 'x1',
-                          'description': 'x1 var description',
-                          'lower_bound': 1.2,
-                          'upper_bound': 5.4},
+                          'description': 'x1 var description'},
                          {'name': 'x2',
-                          'description': 'x2 var description',
-                          'lower_bound': -3.24,
-                          'upper_bound': 0.0}],
+                          'description': 'x2 var description'}],
                      'output_variables': [
                          {'name': 'f1',
                           'description': 'f1 var description'},
@@ -32,13 +28,9 @@ class TestCreateSystem(APITestCase):
                 'description': 'system with vars description',
                 'input_variables': [
                     {'name': 'x1',
-                     'description': 'x1 var description',
-                     'lower_bound': 1.2,
-                     'upper_bound': 5.4},
+                     'description': 'x1 var description'},
                     {'name': 'x2',
-                     'description': 'x2 var description',
-                     'lower_bound': -3.24,
-                     'upper_bound': 0.0}],
+                     'description': 'x2 var description'}],
                 'output_variables': [
                     {'name': 'f1',
                      'description': 'f1 var description'},
@@ -60,14 +52,10 @@ class TestCreateSystem(APITestCase):
         x1 = system.input_variables.get(name='x1')
         self.assertEqual(x1.name, data['input_variables'][0]['name'])
         self.assertEqual(x1.description, data['input_variables'][0]['description'])
-        self.assertEqual(x1.lower_bound, data['input_variables'][0]['lower_bound'])
-        self.assertEqual(x1.upper_bound, data['input_variables'][0]['upper_bound'])
 
         x2 = system.input_variables.get(name='x2')
         self.assertEqual(x2.name, data['input_variables'][1]['name'])
         self.assertEqual(x2.description, data['input_variables'][1]['description'])
-        self.assertEqual(x2.lower_bound, data['input_variables'][1]['lower_bound'])
-        self.assertEqual(x2.upper_bound, data['input_variables'][1]['upper_bound'])
 
         f1 = system.output_variables.get(name='f1')
         self.assertEqual(f1.name, data['output_variables'][0]['name'])
@@ -89,16 +77,12 @@ class TestGetSystem(APITestCase):
         self.x1 = InputVariable.objects.create(
             name='x1',
             description='x1 description',
-            system_id=self.system.id,
-            lower_bound=0.0,
-            upper_bound=1.0)
+            system_id=self.system.id)
 
         self.x2 = InputVariable.objects.create(
             name='x2',
             description='x2 description',
-            system_id=self.system.id,
-            lower_bound=0.0,
-            upper_bound=1.0)
+            system_id=self.system.id)
 
         self.system.input_variables.add(self.x1, self.x2)
 
@@ -133,14 +117,10 @@ class TestGetSystem(APITestCase):
         x1 = [var for var in response.data['input_variables'] if var['name'] == 'x1'][0]
         self.assertEqual(x1['name'], self.x1.name)
         self.assertEqual(x1['description'], self.x1.description)
-        self.assertEqual(x1['lower_bound'], self.x1.lower_bound)
-        self.assertEqual(x1['upper_bound'], self.x1.upper_bound)
 
         x2 = [var for var in response.data['input_variables'] if var['name'] == 'x2'][0]
         self.assertEqual(x2['name'], self.x2.name)
         self.assertEqual(x2['description'], self.x2.description)
-        self.assertEqual(x2['lower_bound'], self.x2.lower_bound)
-        self.assertEqual(x2['upper_bound'], self.x2.upper_bound)
 
         f1 = [var for var in response.data['output_variables'] if var['name'] == 'f1'][0]
         self.assertEqual(f1['name'], self.f1.name)

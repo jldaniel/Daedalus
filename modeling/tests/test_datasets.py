@@ -13,16 +13,12 @@ class TestCreateDataSet(APITestCase):
         self.x1 = InputVariable.objects.create(
             name='x1',
             description='x1 description',
-            system_id=self.system.id,
-            lower_bound=0.0,
-            upper_bound=1.0)
+            system_id=self.system.id)
 
         self.x2 = InputVariable.objects.create(
             name='x2',
             description='x2 description',
-            system_id=self.system.id,
-            lower_bound=0.0,
-            upper_bound=1.0)
+            system_id=self.system.id)
 
         self.system.input_variables.add(self.x1, self.x2)
 
@@ -66,8 +62,95 @@ class TestCreateDataSet(APITestCase):
 
         self.assertEqual(response.data['description'], data['description'])
 
-        # TODO Validate the data
+    def test_missing_input(self):
+        url = reverse('dataset-list', args=[self.system.id])
+        data = {'description': 'test invalid dataset',
+                'data': {
+                    'inputs': [{
+                        'name': 'x1',
+                        'values': [1.1, 2.3, -3.4, 5.9]
+                    }],
+                    'outputs': [{
+                        'name': 'f1',
+                        'values': [101.2, 42.1, -13.3, 5.55]
+                    }, {
+                        'name': 'f2',
+                        'values': [0.12, 0.031, 1.99, 24.42]
+                    }]}}
 
+        response = self.client.post(url, data, format='json')
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertTrue("Incomplete dataset" in response.data)
+
+    def test_create_invalid_input(self):
+        url = reverse('dataset-list', args=[self.system.id])
+        data = {'description': 'test invalid dataset',
+                'data': {
+                    'inputs': [{
+                        'name': 'invalid',
+                        'values': [1.1, 2.3, -3.4, 5.9]
+                    }, {
+                        'name': 'x2',
+                        'values': [-5.32, 9.13, 10.22, 3.23]
+                    }],
+                    'outputs': [{
+                        'name': 'f1',
+                        'values': [101.2, 42.1, -13.3, 5.55]
+                    }, {
+                        'name': 'f2',
+                        'values': [0.12, 0.031, 1.99, 24.42]
+                    }]}}
+
+        response = self.client.post(url, data, format='json')
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertTrue("Unrecognized variable" in response.data)
+
+    def test_missing_output(self):
+        url = reverse('dataset-list', args=[self.system.id])
+        data = {'description': 'test invalid dataset',
+                'data': {
+                    'inputs': [{
+                        'name': 'x1',
+                        'values': [1.1, 2.3, -3.4, 5.9]
+                    }, {
+                        'name': 'x2',
+                        'values': [-5.32, 9.13, 10.22, 3.23]
+                    }],
+                    'outputs': [{
+                        'name': 'f1',
+                        'values': [101.2, 42.1, -13.3, 5.55]
+                    }]}}
+
+        response = self.client.post(url, data, format='json')
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertTrue("Incomplete dataset" in response.data)
+
+    def test_create_invalid_output(self):
+        url = reverse('dataset-list', args=[self.system.id])
+        data = {'description': 'test invalid dataset',
+                'data': {
+                    'inputs': [{
+                        'name': 'x1',
+                        'values': [1.1, 2.3, -3.4, 5.9]
+                    }, {
+                        'name': 'x2',
+                        'values': [-5.32, 9.13, 10.22, 3.23]
+                    }],
+                    'outputs': [{
+                        'name': 'f1',
+                        'values': [101.2, 42.1, -13.3, 5.55]
+                    }, {
+                        'name': 'invalid',
+                        'values': [0.12, 0.031, 1.99, 24.42]
+                    }]}}
+
+        response = self.client.post(url, data, format='json')
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertTrue("Unrecognized variable" in response.data)
 
 class TestGetDataSet(APITestCase):
 
@@ -76,16 +159,12 @@ class TestGetDataSet(APITestCase):
         self.x1 = InputVariable.objects.create(
             name='x1',
             description='x1 description',
-            system_id=self.system.id,
-            lower_bound=0.0,
-            upper_bound=1.0)
+            system_id=self.system.id)
 
         self.x2 = InputVariable.objects.create(
             name='x2',
             description='x2 description',
-            system_id=self.system.id,
-            lower_bound=0.0,
-            upper_bound=1.0)
+            system_id=self.system.id)
 
         self.system.input_variables.add(self.x1, self.x2)
 
@@ -143,16 +222,12 @@ class TestGetDataSetList(APITestCase):
         self.x1 = InputVariable.objects.create(
             name='x1',
             description='x1 description',
-            system_id=self.system.id,
-            lower_bound=0.0,
-            upper_bound=1.0)
+            system_id=self.system.id)
 
         self.x2 = InputVariable.objects.create(
             name='x2',
             description='x2 description',
-            system_id=self.system.id,
-            lower_bound=0.0,
-            upper_bound=1.0)
+            system_id=self.system.id)
 
         self.system.input_variables.add(self.x1, self.x2)
 
@@ -233,16 +308,12 @@ class TestDeleteDataSet(APITestCase):
         self.x1 = InputVariable.objects.create(
             name='x1',
             description='x1 description',
-            system_id=self.system.id,
-            lower_bound=0.0,
-            upper_bound=1.0)
+            system_id=self.system.id)
 
         self.x2 = InputVariable.objects.create(
             name='x2',
             description='x2 description',
-            system_id=self.system.id,
-            lower_bound=0.0,
-            upper_bound=1.0)
+            system_id=self.system.id)
 
         self.system.input_variables.add(self.x1, self.x2)
 

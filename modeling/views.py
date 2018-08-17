@@ -3,7 +3,7 @@ from rest_framework.decorators import api_view
 from rest_framework.response import Response
 
 from modeling.models import System, DataSet
-from modeling.serializers import SystemSerializer, DataSetSerializer
+from modeling.serializers import SystemSerializer, DataSetListSerializer, DataSetDetailsSerializer
 
 import json
 
@@ -57,29 +57,67 @@ def dataset_list(request, system_id, format=None):
             system = System.objects.get(pk=system_id)
         except System.DoesNotExist:
             # TODO: Add in message as well to let the user know the specified system does not exist
-            return Response(status=status.HTTP_400_BAD_REQUEST)
+            return Response("System with id: " + str(system_id) + " does not exist",
+                                                     status=status.HTTP_400_BAD_REQUEST)
+
+        # Validate the incoming data field
+        data = request.data
+
+        input_variable_names = [var.name for var in system.input_variables.all()]
+        inputs = data['data']['inputs']
+
+        if len(input_variable_names) != len(inputs):
+            missing_inputs = [var['name'] for var in inputs if var['name'] not in input_variable_names]
+            return Response("Incomplete dataset, missing data for input variables " +
+                            repr(missing_inputs), status=status.HTTP_400_BAD_REQUEST)
+
+        for input in inputs:
+            if input['name'] not in input_variable_names:
+                return Response("Unrecognized variable " + input['name'],
+                                status=status.HTTP_400_BAD_REQUEST)
+
+        output_variable_names = [var.name for var in system.output_variables.all()]
+        outputs = data['data']['outputs']
+
+        if len(output_variable_names) != len(outputs):
+            missing_outputs = [var['name'] for var in outputs if var['name'] not in output_variable_names]
+            return Response("Incomplete dataset, missing data for output variables " +
+                            repr(missing_outputs), status=status.HTTP_400_BAD_REQUEST)
+
+        for output in outputs:
+            if output['name'] not in output_variable_names:
+                return Response("Unrecognized variable " + output['name'],
+                                status=status.HTTP_400_BAD_REQUEST)
+
+        # Get the number of runs
+        num_runs = len(inputs[0]['values'])
+        for input in inputs:
+            if len(input['values']) != num_runs:
+                return Response('Invalid number of runs', status=status.HTTP_400_BAD_REQUEST)
+
+        for output in outputs:
+            if len(output['values']) != num_runs:
+                return Response('Invalid number of runs', status=status.HTTP_400_BAD_REQUEST)
 
         # Convert the incoming data field to a string
-        data = request.data
         data['data'] = str(data['data'])
+        data['runs'] = num_runs
 
-        serializer = DataSetSerializer(data=data, context={'system_id': system_id})
+        serializer = DataSetDetailsSerializer(data=data, context={'system_id': system_id})
         if serializer.is_valid():
             serializer.save()
 
-            # Convert the string representation into proper JSON for the response
-            serializer_data = serializer.data
-            data = serializer_data['data']
-            data_json = json.loads(data.replace('\\', '').replace('\'', '\"'))
-            serializer_data['data'] = data_json
+            # Switch to the data free version of the model for the response
+            serializer = DataSetListSerializer(data=serializer.data)
+            if serializer.is_valid():
 
-            return Response(serializer_data, status=status.HTTP_201_CREATED)
+                return Response(serializer.data, status=status.HTTP_201_CREATED)
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     elif request.method == 'GET':
         system = System.objects.get(pk=system_id)
-        serializer = DataSetSerializer(system.datasets, many=True)
+        serializer = DataSetListSerializer(system.datasets, many=True)
         return Response(serializer.data)
 
 
@@ -92,7 +130,7 @@ def dataset_detail(request, dataset_id, format=None):
         return Response(status=status.HTTP_400_BAD_REQUEST)
 
     if request.method == 'GET':
-        serializer = DataSetSerializer(dataset)
+        serializer = DataSetDetailsSerializer(dataset)
 
         # Covert the string representation of the datasets into proper JSON for the response
         serializer_data = serializer.data

@@ -20,8 +20,6 @@ class System(models.Model):
 class InputVariable(models.Model):
     name = models.CharField(max_length=120, blank=False)
     description = models.TextField()
-    lower_bound = models.FloatField()
-    upper_bound = models.FloatField()
     system = models.ForeignKey(System, related_name='input_variables', on_delete=models.CASCADE)
 
 

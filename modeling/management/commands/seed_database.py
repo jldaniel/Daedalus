@@ -55,7 +55,8 @@ class Command(BaseCommand):
         dataset1 = DataSet.objects.create(
             description='test dataset description 2',
             data=dataset1_data,
-            system_id=system.id
+            system_id=system.id,
+            runs=3
         )
 
         dataset2_data = {
@@ -78,7 +79,8 @@ class Command(BaseCommand):
         dataset2 = DataSet.objects.create(
             description='test dataset description 2',
             data=dataset2_data,
-            system_id=system.id
+            system_id=system.id,
+            runs=3
         )
 
         system.datasets.add(dataset1, dataset2)

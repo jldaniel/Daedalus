@@ -72,7 +72,7 @@ def dataset_list(request, system_id, format=None):
                             repr(missing_inputs), status=status.HTTP_400_BAD_REQUEST)
 
         for input in inputs:
-            if input['name'] not in input_variable_names:
+            if str(input['name']) not in input_variable_names:
                 return Response("Unrecognized variable " + input['name'],
                                 status=status.HTTP_400_BAD_REQUEST)
 

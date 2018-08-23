@@ -12,7 +12,12 @@ launchctl load ~/Library/LaunchAgents/homebrew.mxcl.redis.plist
 
 ```
 
-Starting celery beat
+Starting the celery manager
+```bash
+python manage.py task_manager
+```
+
+Starting celery beat workers
 ```bash
 celery -A daedalus beat -l info --scheduler django_celery_beat.schedulers:DatabaseScheduler
 ```

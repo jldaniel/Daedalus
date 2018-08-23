@@ -41,6 +41,8 @@ class Surrogate(models.Model):
     created = models.DateTimeField(auto_now_add=True)
     updated = models.DateTimeField(auto_now=True)
     system = models.ForeignKey(System, related_name='surrogate', on_delete=models.SET_NULL, null=True)
+    score = models.FloatField(null=True)
+    location = models.TextField(null=True)
     # TODO Add surrogate metdata
 
 

@@ -9,5 +9,6 @@ env:
 before_script:
   - psql -c "CREATE DATABASE daedalus_db;" -U postgres
 script:
+  - python manage.py migrate
   - python manage.py test modeling.tests
 

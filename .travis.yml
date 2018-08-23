@@ -1,0 +1,14 @@
+language: python
+python:
+  - "3.6"
+services: postgresql
+virtualenv:
+  system_site_packages: true
+install:
+  - pip install -r requirements.txt
+env:
+  - DJANGO_VERSION=2.1.0
+  - DJANGO_SETTINGS_MODULE='daedalus.settings'
+script:
+  - python manage.py test modeling.tests
+

@@ -160,3 +160,16 @@ REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': [],
     'TEST_REQUEST_DEFAULT_FORMAT': 'json'
 }
+
+# TRAVIS CI
+if 'TRAVIS' in os.environ:
+    DATABASES = {
+        'default': {
+            'ENGINE':   'django.db.backends.postgresql',
+            'NAME':     'daedalus_db',
+            'USER':     'postgres',
+            'PASSWORD': '',
+            'HOST':     'localhost',
+            'PORT':     '',
+        }
+    }

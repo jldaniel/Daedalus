@@ -21,3 +21,5 @@ Starting celery beat workers
 ```bash
 celery -A daedalus beat -l info --scheduler django_celery_beat.schedulers:DatabaseScheduler
 ```
+
+

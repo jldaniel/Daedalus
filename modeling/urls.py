@@ -7,6 +7,8 @@ urlpatterns = [
     url(r'^systems/$', views.system_list, name='system-list'),
     url(r'^systems/(?P<system_id>[0-9]+)/$', views.system_detail, name='system-detail'),
     url(r'^systems/(?P<system_id>[0-9]+)/datasets/$', views.dataset_list, name='dataset-list'),
+    url(r'systems/(?P<system_id>[0-9]+)/predict/$', views.predict, name='predict'),
+    url(r'systems/(?P<system_id>[0-9]+)/adapt/$', views.adapt, name='adapt'),
     url(r'^datasets/(?P<dataset_id>[0-9]+)/$', views.dataset_detail, name='dataset-detail')
 ]
 

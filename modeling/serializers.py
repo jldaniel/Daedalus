@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from modeling.models import InputVariable, OutputVariable, System, DataSet, Surrogate
+from modeling.models import InputVariable, OutputVariable, System, DataSet, SurrogateModel
 
 
 class InputVariableSerializer(serializers.ModelSerializer):
@@ -41,7 +41,7 @@ class DataSetDetailsSerializer(serializers.ModelSerializer):
 class SurrogateSerializer(serializers.ModelSerializer):
 
     class Meta:
-        model = Surrogate
+        model = SurrogateModel
         fields = ('id', 'created', 'updated')
 
 

@@ -5,7 +5,10 @@ from rest_framework.response import Response
 from modeling.models import System, DataSet
 from modeling.serializers import SystemSerializer, DataSetListSerializer, DataSetDetailsSerializer
 
+from kaolin import Surrogate
+
 import json
+import numpy as np
 
 
 @api_view(['POST', 'GET'])
@@ -153,12 +156,138 @@ def predict(request, system_id, format=None):
         return Response(status=status.HTTP_400_BAD_REQUEST)
 
     # Check that the system has a valid surrogate
+    if system.surrogate_id is None:
+        return Response(status=status.HTTP_400_BAD_REQUEST)
 
     # Parse the input data and validate
+        # Validate the incoming data field
+    data = request.data
 
-    # Call the analysis lib
+    input_variable_names = [var.name for var in system.input_variables.all()]
+    inputs = data['inputs']
+
+    if len(input_variable_names) != len(inputs):
+        missing_inputs = [var['name'] for var in inputs if var['name'] not in input_variable_names]
+        return Response("Incomplete dataset, missing data for input variables " +
+                        repr(missing_inputs), status=status.HTTP_400_BAD_REQUEST)
+
+    for input in inputs:
+        if str(input['name']) not in input_variable_names:
+            return Response("Unrecognized variable " + input['name'],
+                            status=status.HTTP_400_BAD_REQUEST)
+
+    # Get the number of runs
+    num_runs = len(inputs[0]['values'])
+    for input in inputs:
+        if len(input['values']) != num_runs:
+            return Response('Invalid number of runs', status=status.HTTP_400_BAD_REQUEST)
+
+    # Gather the values for the points to predict at
+    prediction_points = []
+    for i in range(num_runs):
+        point = []
+        for input in inputs:
+            point.append(input['values'][i])
+
+        prediction_points.append(point)
+
+    # Load the surrogate
+    try:
+        surrogate = Surrogate().load(system.surrogate.location)
+    except Exception as ex:
+        return Response(ex, status=status.HTTP_400_BAD_REQUEST)
+
+    # Predict the points
+    y = surrogate.predict(prediction_points)
 
     # Package the response
+    response_data = {}
+    response_data['inputs'] = inputs
+    response_data['outputs'] = []
+
+    outputs_variable_names = [var.name for var in system.output_variables.all()]
+
+    for idx, output_name in enumerate(outputs_variable_names):
+        output_data = {}
+        output_data['name'] = output_name
+        output_data['values'] = [point[i] for point in y]
+        response_data['outputs'].append(output_data)
 
     # Return
+    return Response(response_data, status=status.HTTP_200_OK)
+
+@api_view(['POST'])
+def adapt(request, system_id, format=None):
+    # POST Model
+    #{'sites': float,
+    # 'bounds': [
+    #       {'name': string,
+    #        'lower_bound': float,
+    #        'upper_bound': float}
+    #    ]
+    # }
+
+    # Load the system
+    try:
+        system = System.objects.get(pk=system_id)
+    except System.DoesNotExist:
+        return Response(status=status.HTTP_400_BAD_REQUEST)
+
+    # Check if the surrogate isnt ready read
+    if system.status == 'ERROR':
+        return Response("Model is in an ERROR state", status=status.HTTP_400_BAD_REQUEST)
+
+    if system.status == 'TRAINING':
+        return Response("Model is currently training", status=status.HTTP_400_BAD_REQUEST)
+
+    n_sites = request.data['sites']
+    bounds_json = request.data['bounds']
+
+    bounds_dict = {}
+    for bound in bounds_json:
+        bounds_dict[bound['name']] = [bound['lower_bound'], bound['upper_bound']]
+
+    # Check that all inputs are accounted for
+    input_variable_names = [var.name for var in system.input_variables.all()]
+    bounds = []
+    for name in input_variable_names:
+        if name not in bounds_dict.keys():
+            return Response("Bounds not set for model input variable " + name, status=status.HTTP_400_BAD_REQUEST)
+
+        bounds.append(bounds_dict[name])
+
+    bounds = np.array(bounds)
+    print("BOUNDS")
+    print(repr(bounds))
+    # RESPONSE MODEL
+    # [{'name': string, 'value': float}]
+
+    designs_response = []
+    designs = None
+    if system.status == 'CREATED':
+        # Model is not trained, generate initial DOE
+        designs = Surrogate().adapt(bounds, n_sites)
+
+    if system.status == 'READY':
+        # Load the surrogate
+        surrogate_location = system.surrogate.location
+        surrogate = Surrogate().load(surrogate_location)
+        designs = surrogate.adapt(bounds, n_sites)
+
+    print("DESIGNS")
+    print(repr(designs))
+    for idx, design in enumerate(designs):
+        design_json = []
+        for idv, name in enumerate(input_variable_names):
+            design_dict = dict()
+            design_dict['name'] = name
+            design_dict['value'] = design[idv]
+            design_json.append(design_dict)
+
+        designs_response.append(design_json)
+
+    return Response(designs_response, status=status.HTTP_201_CREATED)
+
+
+
 

@@ -37,13 +37,12 @@ class DataSet(models.Model):
     data = models.TextField(null=True)  # JSON Representation of the data
 
 
-class Surrogate(models.Model):
+class SurrogateModel(models.Model):
     created = models.DateTimeField(auto_now_add=True)
     updated = models.DateTimeField(auto_now=True)
     system = models.ForeignKey(System, related_name='surrogate', on_delete=models.SET_NULL, null=True)
     score = models.FloatField(null=True)
     location = models.TextField(null=True)
-    # TODO Add surrogate metdata
 
 
 

@@ -7,3 +7,4 @@ sklearn
 numpy
 scipy
 django-cors-headers
+-e git+git://github.com/jldaniel/Kaolin.git#egg=kaolin

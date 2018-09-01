@@ -7,7 +7,7 @@ import os
 
 from daedalus.celery import app as celery
 
-from modeling.analysis import SurrogateModel
+from kaolin import Surrogate
 
 app = Celery('modeling')
 
@@ -16,6 +16,6 @@ logger = get_task_logger(__name__)
 
 @celery.task(name='modeling.tasks.train_surrogate')
 def train_surrogate(system_id):
-    surrogate = SurrogateModel()
+    surrogate = Surrogate()
     logger.info('test task called')
 

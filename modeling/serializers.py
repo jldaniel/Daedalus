@@ -30,7 +30,7 @@ class DataSetDetailsSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = DataSet
-        fields = ('id', 'description', 'created', 'data', 'runs', 'system_id')
+        fields = ('id', 'description', 'created', 'data', 'runs', 'system_id', 'applied')
 
     def create(self, validated_data):
         validated_data['system_id'] = self.context['system_id']

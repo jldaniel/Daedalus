@@ -2,7 +2,7 @@
 Currently just notes on the system design, eventually this space will be used to describe the system to aid
 in development and collaboration.
 
-#### System States
+### System States
 __CREATED__
 
 The system has been created but no data has been supplied to train a surrogate
@@ -35,7 +35,7 @@ used for basic functionality.
 
 NOTE: Still need to identify when these error states could occur, and provide functionality to fix it. 
 
-#### Issues
+### Issues
 
 Daedalus has a variety of functionality via the REST API that does not involve the creation of a persistent resource,
 e.g. /adapt and /predict which has an API for interaction over the wire but not in a standard REST form of interaction
@@ -74,3 +74,29 @@ concern. For example, a simple system/model is very fast to respond to a predict
 complex model, it is possible that the analysis may take longer than standard HTTP request timeout times resulting
 in an error (and an upset user). How can this be handled without turning every analysis request into a polling operation
 to check the state of the operation which would only exacerbate system load issues. 
+
+#### Users
+
+Currently Daedalus does not have a concept of users. This will absolutely need to be implemented before deployment. 
+Users should have multiple role levels
+
+System Admin: Has total administrative abilities including being able to create/delete/update users. Monitor system
+usage and statistics. Update/Delete systems, ex. clean out old surrogates that are no longer being used or transfer
+ownership of these systems.
+
+Group Admin: Had administrative abilities for systems associated with a group. Able to add/remove users,
+update/delete systems. Able to update user roles related to that group.
+
+Use Case: New employee comes on board. Sys admin gives them an account and assigns them to a group with 'READ'
+access so they can view and predict on models. Users begins producing training data for the workgroup, so the Group 
+Admin should then be able to give them 'WRITE' access to upload datasets that will be included in the training
+data for the surrogate.
+
+User: Can create/update systems they are associated with. Can be part of a group
+
+Group: Systems can be associated with a group where all users associated with that group can update/use those systems. 
+
+SSO: Some organizations that would want to use this system will want to integrate it with their current SSO system 
+so that users don't have to log in to multiple utilities. Is there a way to handle SSO in general so that a 
+customization will not need to be created for each of these organizations?
+

@@ -2,7 +2,7 @@ from django.core.management.base import BaseCommand, CommandError
 from modeling.models import System
 from multiprocessing import Process
 import time
-from modeling.tasks import train_surrogate
+from modeling.tasks import train_surrogate, update_surrogate
 from modeling.models import SYSTEM_STATUS
 
 # Sets up the manager thread
@@ -13,31 +13,32 @@ def check_system_status():
     while True:
         systems = System.objects.all()
         for system in systems:
-            print('Checking system ' + str(system.id))
+            print('Checking system', system.name, ':', system.id)
             status = system.status
 
-            if status == 'READY':
-                # Kick off an asynch process to start training the system
-                system.status = 'TRAINING'
-                system.save()
-                train_surrogate.apply_async(args=[system.id])
+            if status == 'CREATED':
+                # Check if any datasets have been applied
+                if system.datasets:
+                    system.status = 'BUSY'
+                    train_surrogate.apply_async(args=[system.id])
 
-            elif status == 'TRAINING':
-                # Check that the system is actually training, if not set the status to ready
+            elif status == 'READY':
+                dataset_ids = []
+                # TODO This can be handled by a query
+                for dataset in system.datasets.all():
+                    if not dataset.applied:
+                        dataset_ids.append(dataset.id)
+
+                if dataset_ids:
+                    system.status = 'BUSY'
+                    update_surrogate.apply_async(args=[system.id, dataset_ids])
+
+            elif status == 'BUSY' or status == 'ERROR':
                 pass
 
-            elif status == 'IDLE':
-                # do nothing?
-                pass
+            time.sleep(2)
 
-            elif status == 'ERROR':
-                # pass
-                pass
 
-            else:
-                print('Unknown status ' + str(status))
-
-            time.sleep(5)
 
 
 class Command(BaseCommand):

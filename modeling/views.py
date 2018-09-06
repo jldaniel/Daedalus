@@ -235,10 +235,10 @@ def adapt(request, system_id, format=None):
 
     # Check if the surrogate isnt ready read
     if system.status == 'ERROR':
-        return Response("Model is in an ERROR state", status=status.HTTP_400_BAD_REQUEST)
+        return Response("System is in an ERROR state", status=status.HTTP_400_BAD_REQUEST)
 
-    if system.status == 'TRAINING':
-        return Response("Model is currently training", status=status.HTTP_400_BAD_REQUEST)
+    if system.status == 'BUSY':
+        return Response("System is currently busy", status=status.HTTP_400_BAD_REQUEST)
 
     n_sites = request.data['sites']
     bounds_json = request.data['bounds']

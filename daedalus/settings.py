@@ -42,7 +42,6 @@ INSTALLED_APPS = [
     'modeling.apps.ModelingConfig',
     'django_celery_results',
     'django_celery_beat',
-    'modeling.analysis',
     'corsheaders'
 ]
 
@@ -173,3 +172,6 @@ if 'TRAVIS' in os.environ:
             'PORT':     '',
         }
     }
+
+# Root directory for surrogate models to be persisted
+SURROGATES_ROOT = os.path.join(BASE_DIR, 'surrogates')

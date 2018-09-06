@@ -4,7 +4,7 @@ from django.db import models
 SYSTEM_STATUS = (
     ('CREATED', 'CREATED'),
     ('READY', 'READY'),
-    ('TRAINING', 'TRAINING'),
+    ('BUSY', 'BUSY'),
     ('ERROR', 'ERROR'),
 )
 
@@ -35,6 +35,7 @@ class DataSet(models.Model):
     system = models.ForeignKey(System, related_name='datasets', on_delete=models.CASCADE, null=True)
     runs = models.IntegerField(default=0)
     data = models.TextField(null=True)  # JSON Representation of the data
+    applied = models.BooleanField(default=False)  # True if dataset applied to surrogate
 
 
 class SurrogateModel(models.Model):
@@ -43,6 +44,12 @@ class SurrogateModel(models.Model):
     system = models.ForeignKey(System, related_name='surrogate', on_delete=models.SET_NULL, null=True)
     score = models.FloatField(null=True)
     location = models.TextField(null=True)
+    datasets = models.ManyToManyField(DataSet)
+
+
+
+
+
 
 
 

@@ -3,10 +3,11 @@
 from rest_framework.test import APITestCase
 
 from modeling.models import System, SurrogateModel, InputVariable, OutputVariable, DataSet
-from modeling.analysis import train_initial_surrogate
+from modeling.analysis import train_initial_surrogate, update_surrogate
 
 from django.conf import settings
 import os
+
 
 class TestAddSurrogate(APITestCase):
 
@@ -51,21 +52,42 @@ class TestTrainSurrogate(APITestCase):
 
         self.system.output_variables.add(self.f1, self.f2)
 
+        # f1 = x^2
+        # f2 = 3x - 1
+        # n_sites = 11
+        # x1 bounds = (-5., 4.)
+        # x2 bounds = (-.5, 0.3)
         dataset_data = {
             'inputs': [{
                 'name': 'x1',
-                'values': [-5., -4., -3., -2., -1.,  0.,  1.,  2.,  3.,  4.]
+                'values': [-5., -4.1, -3.2, -2.3, -1.4, -0.5, 0.4, 1.3, 2.2, 3.1, 4.]
             }, {
                 'name': 'x2',
-                'values': [0., 0.22222222, 0.44444444, 0.66666667, 0.88888889, 1.11111111,
-                           1.33333333, 1.55555556, 1.77777778, 2.]
+                'values': [-0.5, -0.42, -0.34, -0.26, -0.18, -0.1, -0.02, 0.06, 0.14, 0.22, 0.3]
             }],
             'outputs': [{
                 'name': 'f1',
-                'values': [25., 16.,  9.,  4.,  1.,  0.,  1.,  4.,  9., 16.]
+                'values': [25.0, 16.81, 10.24, 5.29, 1.96, 0.25, 0.16, 1.69, 4.84, 9.61, 16.0]
             }, {
                 'name': 'f2',
-                'values': [-15.5, -12.5, -9.5, -6.5, -3.5, -0.5, 2.5, 5.5, 8.5, 11.5]
+                'values': [-2.5, -2.26, -2.02, -1.78, -1.54, -1.30, -1.06, -0.82, -0.58, -0.34, -0.10]
+            }]
+        }
+
+        update_data = {
+            'inputs': [{
+                'name': 'x1',
+                'values': [-0.5349978, 3.88431693, -3.21838491, 0.38599026]
+            }, {
+                'name': 'x2',
+                'values': [0.24225488, -0.05801053, 0.26955379, -0.24816191]
+            }],
+            'outputs': [{
+                'name': 'f1',
+                'values': [0.286222, 15.087917, 10.358001, 0.148988]
+            }, {
+                'name': 'f2',
+                'values': [-0.273235, -1.174031, -0.191338, -1.744485]
             }]
         }
 
@@ -73,7 +95,13 @@ class TestTrainSurrogate(APITestCase):
             description='test dataset',
             data=dataset_data,
             system_id=self.system.id,
-            runs=10
+            runs=11
+        )
+
+        self.adaption_dataset = DataSet.objects.create(
+            description='adaption dataset',
+            data=update_data,
+            runs=4
         )
 
     def test_train_surrogate(self):
@@ -88,6 +116,16 @@ class TestTrainSurrogate(APITestCase):
         surrogate = SurrogateModel.objects.all()[0]
         surrogate_path = surrogate.location
         self.assertTrue(os.path.isfile(surrogate_path))
+
+    def test_train_adapt_surrogate(self):
+        system = System.objects.all()[0]
+        dataset_train = DataSet.objects.all()[0]
+        dataset_adapt = DataSet.objects.all()[1]
+
+        train_initial_surrogate(system, dataset_train)
+        update_surrogate(system, dataset_adapt)
+
+
 
 
 

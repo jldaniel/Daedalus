@@ -4,6 +4,7 @@ from celery.utils.log import get_task_logger
 from django.forms.models import model_to_dict
 from django.conf import settings
 from modeling.models import System, DataSet
+from modeling.analysis import train_initial_surrogate
 import os
 
 from daedalus.celery import app as celery
@@ -25,16 +26,8 @@ def train_surrogate(system_id):
     datasets = system.datasets.all()
     dataset = datasets[0]
 
+    train_initial_surrogate(system, dataset)
 
-
-    
-
-
-
-
-    # Check the system state
-    system.status = 'READY'
-    pass
 
 @celery.task(name='modeling.tasks.update_surrogate')
 def update_surrogate(system_id, dataset_ids):

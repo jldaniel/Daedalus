@@ -37,8 +37,6 @@ def train_initial_surrogate(system, dataset):
         for j, var in enumerate(output_vars):
             y_train[i, j] = var['values'][i]
 
-    print('x_train', repr(x_train))
-    print('y_train', repr(y_train))
     # Train the surrogate model
     surrogate = Surrogate()
     surrogate.fit(x_train, y_train)
@@ -67,15 +65,50 @@ def train_initial_surrogate(system, dataset):
     system.save()
 
 
+def update_surrogate(system, dataset):
 
+    # Load the surrogate
+    surrogate_model = system.surrogate.get()
+    surrogate_location = surrogate_model.location
+    surrogate = Surrogate()
+    surrogate.load(surrogate_location)
 
+    # Get the json representation of the dataset data
+    dataset_data_json = dataset.data
+    dataset_data = json.loads(dataset_data_json.replace('\\', '').replace('\'', '\"'))
 
+    input_variable_names = [var.name for var in system.input_variables.all()]
+    input_vars = dataset_data['inputs']
 
+    output_variable_names = [var.name for var in system.output_variables.all()]
+    output_vars = dataset_data['outputs']
 
+    # Build the training data input arrays
+    n_runs = dataset.runs
+    ndim_in = len(input_variable_names)
+    ndim_out = len(output_variable_names)
 
+    x_train = np.empty((n_runs, ndim_in))
+    y_train = np.empty((n_runs, ndim_out))
+    for i in range(n_runs):
 
+        for j, var in enumerate(input_vars):
+            x_train[i, j] = var['values'][i]
 
+        for j, var in enumerate(output_vars):
+            y_train[i, j] = var['values'][i]
 
+    surrogate.fit(x_train, y_train)
+    surrogate.save(surrogate_location)
 
+    surrogate_model.score = surrogate.cv_metrics['r2_score']
+    surrogate_model.datasets.set([dataset])
 
+    dataset.applied = True
+    system.surrogate.set([surrogate_model])
+    system.status = 'READY'
+
+    dataset.save()
+    surrogate_model.save()
+    system.save()
 

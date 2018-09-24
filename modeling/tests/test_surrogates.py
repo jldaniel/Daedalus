@@ -1,12 +1,15 @@
 
 
 from rest_framework.test import APITestCase
+from rest_framework import status
 
 from modeling.models import System, SurrogateModel, InputVariable, OutputVariable, DataSet
 from modeling.analysis import train_initial_surrogate, update_surrogate
 
 from django.conf import settings
+from django.urls import reverse
 import os
+import json
 
 
 class TestAddSurrogate(APITestCase):
@@ -98,11 +101,23 @@ class TestTrainSurrogate(APITestCase):
             runs=11
         )
 
-        self.adaption_dataset = DataSet.objects.create(
+        self.adaptation_dataset = DataSet.objects.create(
             description='adaption dataset',
             data=update_data,
             runs=4
         )
+
+        self.adaptation_policy = {'n_designs': 10,
+                                  'inputs': [{
+                                    'name': 'x1',
+                                    'lower_bound': -5.0,
+                                    'upper_bound': 4.0
+                                    }, {
+                                    'name': 'x2',
+                                    'lower_bound': -0.5,
+                                    'upper_bound': 0.3
+                                    }]}
+
 
     def test_train_surrogate(self):
         system = System.objects.all()[0]
@@ -116,8 +131,9 @@ class TestTrainSurrogate(APITestCase):
         surrogate = SurrogateModel.objects.all()[0]
         surrogate_path = surrogate.location
         self.assertTrue(os.path.isfile(surrogate_path))
+        os.remove(surrogate_path)
 
-    def test_train_adapt_surrogate(self):
+    def test_train_update_surrogate(self):
         system = System.objects.all()[0]
         dataset_train = DataSet.objects.all()[0]
         dataset_adapt = DataSet.objects.all()[1]
@@ -125,7 +141,36 @@ class TestTrainSurrogate(APITestCase):
         train_initial_surrogate(system, dataset_train)
         update_surrogate(system, dataset_adapt)
 
+    def test_adapt_untrained_surrogate(self):
+        system = System.objects.all()[0]
 
+        url = reverse('adapt', args=[system.id])
+        response = self.client.post(url, self.adaptation_policy, format='json')
+
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        response.render()
+
+        designs = json.loads(response.content.decode('utf8').replace("'", '"'))
+        self.assertEqual(len(designs), 10)
+
+    def test_adapt_trained_surrogate(self):
+        system = System.objects.all()[0]
+        dataset = DataSet.objects.all()[0]
+
+        train_initial_surrogate(system, dataset)
+
+        url = reverse('adapt', args=[system.id])
+        response = self.client.post(url, self.adaptation_policy, format='json')
+
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        response.render()
+
+        designs = json.loads(response.content.decode('utf8').replace("'", '"'))
+        self.assertEqual(len(designs), 10)
+
+    def tearDown(self):
+        # Remove the surrogate file from the test_train_surrogate test
+        pass
 
 
 
@@ -158,3 +203,4 @@ class TestPredict(APITestCase):
         )
 
         self.system.output_variables.add(self.f1, self.f2)
+

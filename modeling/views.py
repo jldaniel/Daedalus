@@ -2,7 +2,7 @@ from rest_framework import status
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 
-from modeling.models import System, DataSet
+from modeling.models import System, DataSet, SurrogateModel
 from modeling.serializers import SystemSerializer, DataSetListSerializer, DataSetDetailsSerializer
 
 from kaolin import Surrogate
@@ -220,7 +220,7 @@ def predict(request, system_id, format=None):
 def adapt(request, system_id, format=None):
     # POST Model
     #{'sites': float,
-    # 'bounds': [
+    # 'inputs': [
     #       {'name': string,
     #        'lower_bound': float,
     #        'upper_bound': float}
@@ -240,8 +240,8 @@ def adapt(request, system_id, format=None):
     if system.status == 'BUSY':
         return Response("System is currently busy", status=status.HTTP_400_BAD_REQUEST)
 
-    n_sites = request.data['sites']
-    bounds_json = request.data['bounds']
+    n_sites = request.data['n_designs']
+    bounds_json = request.data['inputs']
 
     bounds_dict = {}
     for bound in bounds_json:
@@ -270,7 +270,8 @@ def adapt(request, system_id, format=None):
 
     if system.status == 'READY':
         # Load the surrogate
-        surrogate_location = system.surrogate.location
+        surrogate = SurrogateModel.objects.get(system_id=system.id)
+        surrogate_location = surrogate.location
         surrogate = Surrogate().load(surrogate_location)
         designs = surrogate.adapt(bounds, n_sites)
 

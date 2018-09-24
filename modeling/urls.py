@@ -10,6 +10,7 @@ urlpatterns = [
     url(r'systems/(?P<system_id>[0-9]+)/predict/$', views.predict, name='predict'),
     url(r'systems/(?P<system_id>[0-9]+)/adapt/$', views.adapt, name='adapt'),
     url(r'^datasets/(?P<dataset_id>[0-9]+)/$', views.dataset_detail, name='dataset-detail')
+
 ]
 
 urlpatterns = format_suffix_patterns(urlpatterns)
